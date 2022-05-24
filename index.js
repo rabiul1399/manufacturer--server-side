@@ -44,7 +44,8 @@ async function run(){
 
     app.post('/order', async(req,res) =>{
       const order = req.body;
-      const query = {order:order }
+      const id =req.params.id;
+      const query = {_id: ObjectId(id) };
       const exists = await OrderCollection.findOne(query);
       if (exists) {
 
@@ -54,6 +55,22 @@ async function run(){
       const result = await OrderCollection.insertOne(order);
 
       res.send({ success: true, result })
+    })
+
+
+    app.get('/order', async (req,res) =>{
+      const userEmail = req.query.userEmail;
+      const decodedEmail = req.decoded.email;
+      console.log(decodedEmail)
+      if (userEmail === decodedEmail) {
+        const query = { patient: patient };
+        const Orders = await OrderCollection.find(query).toArray();
+
+        res.send(Orders)
+      }
+      else {
+        return res.status(403).send({ message: 'booking access' })
+      }
     })
 
 
