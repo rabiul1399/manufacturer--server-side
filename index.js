@@ -17,20 +17,23 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-// function verifyJWT(req,res,next){
-//   const authHeader = req.headers.authorization;
-//   if(!authHeader){
-//     return res.status(401).send({message: 'UnAuthorized access'})
-//   }
-//   const token  = authHeader.split('')[1];
-//   jwt.verify(token,process.env.SECRET_TOKEN_KEY, function(err,decoded){
-//     if(err){
-//       return res.status(403).send({message: "Forbidden access"})
-//     }
-//     req.decoded = decoded;
-//     next();
-//   })
-// }
+function verifyJWT(req,res,next){
+  const authHeader =req.headers.authorization
+
+  if(!authHeader){
+    return res.status(401).send({message: 'UnAuthorized access'})
+  }
+  const token  = authHeader.split('')[1];
+  jwt.verify(token,process.env.SECRET_TOKEN_KEY, function (err,decoded){
+    if(err){
+      return res.status(403).send({message: "Forbidden access"})
+    }
+    req.decoded = decoded;
+    next();
+  })
+
+  console.log("auth header" ,decoded)
+}
 
 async function run(){
     try{
@@ -39,9 +42,30 @@ async function run(){
     const OrderCollection = client.db("parts_gear").collection("Order");
     const userCollection = client.db("parts_gear").collection("users");
     
+    // const verifyAdmin = async (req,res,next) =>{
+    //   // const requester = req.decoded.email;
+    //   const requester = req.query.user;
+    //   console.log(requester)
+    //   const requesterAccount = await userCollection.findOne({ email: requester });
+    //   if (requesterAccount.role === 'admin') {
+    //     next();
+
+    //   }
+    //   else {
+    //      res.status(403).send({ message: 'forbidden' })
+    //   }
+    // }
+
+  /// all email user 
+
+    app.get('/user', async(req,res) =>{
+      const users = await userCollection.find().toArray();
+      res.send(users)
+    })
 
     app.put('/user/:email',async(req,res) =>{
       const email = req.params.email;
+ 
       const user = req.body;
       const filter = { email: email };
       const options = { upsert: true };
@@ -49,11 +73,39 @@ async function run(){
         $set: user,
       }
       const result = await userCollection.updateOne(filter, updateDoc, options);
+
       const token = jwt.sign({email:email},process.env.SECRET_TOKEN_KEY, { expiresIn: '1h' });
       res.send({ result , token});
 
 
     })
+
+    app.put('/user/admin/:email' , async (req, res) => {
+      const email = req.params.email;
+
+      const requester = req.params.email;   
+        const requesterAccount = await userCollection.findOne({ email: requester });
+        console.log('account ', requesterAccount)
+        if (requesterAccount.role === 'admin') {
+          const filter = { email: email };
+        const updateDoc = {
+          $set: { role: 'admin' },
+        }
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send({ result });  
+      }
+      else{
+        res.status(403).send({message: 'forbidden'});
+      }
+      
+      })
+
+      app.get('/admin/:email', async (req, res) => {
+        const email = req.params.email;
+        const user = await userCollection.findOne({ email: email });
+        const isAdmin = user.role === 'admin';
+        res.send({ admin: isAdmin });
+      })
 
  // Product API
     app.get('/product',async(req,res)=>{
@@ -96,9 +148,24 @@ async function run(){
     app.get('/order', async (req,res) =>{
       const user = req.query.user;
       const query = {user: user};
-      console.log(query)
       const Orders = await OrderCollection.find(query).toArray();
-      res.send(Orders);
+
+      res.send(Orders)
+    })
+
+    app.delete('/order/:id',async(req,res) =>{
+      const id =req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await OrderCollection.deleteOne(query);
+      res.send(result);
+
+  })
+
+    app.get('/allorder',async(req,res) =>{
+      const query = {};
+      const cursor = OrderCollection.find(query);
+      const allOrder= await cursor.toArray();
+      res.send(allOrder);
     })
 
 
