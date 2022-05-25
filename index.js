@@ -1,4 +1,5 @@
 const express = require("express");
+const jwt = require('jsonwebtoken');
 const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 5000;
@@ -16,13 +17,43 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
+// function verifyJWT(req,res,next){
+//   const authHeader = req.headers.authorization;
+//   if(!authHeader){
+//     return res.status(401).send({message: 'UnAuthorized access'})
+//   }
+//   const token  = authHeader.split('')[1];
+//   jwt.verify(token,process.env.SECRET_TOKEN_KEY, function(err,decoded){
+//     if(err){
+//       return res.status(403).send({message: "Forbidden access"})
+//     }
+//     req.decoded = decoded;
+//     next();
+//   })
+// }
 
 async function run(){
     try{
         await client.connect();
     const PartsCollection = client.db("parts_gear").collection("product");
     const OrderCollection = client.db("parts_gear").collection("Order");
-   
+    const userCollection = client.db("parts_gear").collection("users");
+    
+
+    app.put('/user/:email',async(req,res) =>{
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      }
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const token = jwt.sign({email:email},process.env.SECRET_TOKEN_KEY, { expiresIn: '1h' });
+      res.send({ result , token});
+
+
+    })
 
  // Product API
     app.get('/product',async(req,res)=>{
@@ -39,6 +70,10 @@ async function run(){
         
        
     })
+
+
+    // available product
+  
 
     // Order Product 
 
@@ -59,18 +94,11 @@ async function run(){
 
 
     app.get('/order', async (req,res) =>{
-      const userEmail = req.query.userEmail;
-      const decodedEmail = req.decoded.email;
-      console.log(decodedEmail)
-      if (userEmail === decodedEmail) {
-        const query = { patient: patient };
-        const Orders = await OrderCollection.find(query).toArray();
-
-        res.send(Orders)
-      }
-      else {
-        return res.status(403).send({ message: 'booking access' })
-      }
+      const user = req.query.user;
+      const query = {email: user};
+      console.log(query)
+      const Orders = await OrderCollection.find(query).toArray();
+      res.send(Orders);
     })
 
 
