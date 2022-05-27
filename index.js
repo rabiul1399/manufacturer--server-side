@@ -66,7 +66,7 @@ async function run(){
     console.log('this is product ', product)
     const price = product.price;
     // const orderQuantity =product.orderQuantity
-    const amount = price * 100;
+    const amount = price * 85;
     const paymentIntent = await stripe.paymentIntents.create({
       amount : amount,
       currency: 'usd',
@@ -142,6 +142,17 @@ async function run(){
         res.send(product);
         
        
+    })
+    app.post('/product',async(req,res) =>{ 
+      const add=req.body;
+      const product= await PartsCollection.insertOne(add)
+      res.send(product);
+    })
+
+    app.delete('/product/:id', async(req,res) =>{
+    const id= req.params.id;
+     const query = {_id: ObjectId(id)};
+     const result = await PartsCollection.deleteOne(query);
     })
 
 
