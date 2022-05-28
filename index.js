@@ -18,24 +18,6 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-function verifyJWT(req,res,next){
-  const authHeader =req.headers.authorization
-
-  if(!authHeader){
-    return res.status(401).send({message: 'UnAuthorized access'})
-  }
-  const token  = authHeader.split('')[1];
-  jwt.verify(token,process.env.SECRET_TOKEN_KEY, function (err,decoded){
-    if(err){
-      return res.status(403).send({message: "Forbidden access"})
-    }
-    req.decoded = decoded;
-    next();
-  })
-
-  console.log("auth header" ,decoded)
-}
-
 async function run(){
     try{
         await client.connect();
@@ -44,19 +26,6 @@ async function run(){
     const userCollection = client.db("parts_gear").collection("users");
     const paymentCollection = client.db("parts_gear").collection("payment");
     
-    // const verifyAdmin = async (req,res,next) =>{
-    //   // const requester = req.decoded.email;
-    //   const requester = req.query.user;
-    //   console.log(requester)
-    //   const requesterAccount = await userCollection.findOne({ email: requester });
-    //   if (requesterAccount.role === 'admin') {
-    //     next();
-
-    //   }
-    //   else {
-    //      res.status(403).send({ message: 'forbidden' })
-    //   }
-    // }
 
   /// all email user 
 
@@ -85,8 +54,7 @@ async function run(){
     })
 
     app.put('/user/:email',async(req,res) =>{
-      const email = req.params.email;
- 
+      const email = req.params.email; 
       const user = req.body;
       const filter = { email: email };
       const options = { upsert: true };
@@ -103,21 +71,21 @@ async function run(){
 
     app.put('/user/admin/:email' , async (req, res) => {
       const email = req.params.email;
-
-      const requester = req.params.email;   
-        const requesterAccount = await userCollection.findOne({ email: requester });
-        console.log('account ', requesterAccount)
-        if (requesterAccount.role === 'admin') {
-          const filter = { email: email };
+      const filter = { email: email };
         const updateDoc = {
           $set: { role: 'admin' },
         }
         const result = await userCollection.updateOne(filter, updateDoc);
-        res.send({ result });  
-      }
-      else{
-        res.status(403).send({message: 'forbidden'});
-      }
+        res.send({ result });         
+      
+      })
+    app.delete('/user/:role' , async (req, res) => {
+       const role = req.params.role;
+       console.log(role)
+      const query  ={role:role};
+
+      const result = await userCollection.deleteOne(query);
+        res.send({ result });         
       
       })
 
