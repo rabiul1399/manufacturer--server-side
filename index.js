@@ -135,6 +135,14 @@ async function run() {
       res.send({ success: true, result })
     })
 
+    app.delete('/order/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await OrderCollection.deleteOne(query);
+      res.send(result);
+
+    })
+
 
     app.get('/order', async (req, res) => {
       const user = req.query.user;
@@ -143,13 +151,7 @@ async function run() {
       res.send(Orders)
     })
 
-    app.delete('/order/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const result = await OrderCollection.deleteOne(query);
-      res.send(result);
 
-    })
 
     app.get('/allorder', async (req, res) => {
       const query = {};
