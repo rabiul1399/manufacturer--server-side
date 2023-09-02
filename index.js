@@ -7,12 +7,13 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIP_SECRET_KEY);
 
-// middleware
+
+// middleware 
 app.use(cors());
 app.use(express.json());
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.lxf7z.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_SECRET_USER}:${process.env.DB_SECRET_PASS}@cluster0.lxf7z.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
@@ -60,7 +61,7 @@ async function run() {
       }
       const result = await userCollection.updateOne(filter, updateDoc, options);
 
-      const token = jwt.sign({ email: email }, process.env.SECRET_TOKEN_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ email: email }, ddcaa26504cd70a6fef9801901c3981538563a1767c297cb8416e8a38c62fe00, { expiresIn: '1h' });
       res.send({ result, token });
 
 
