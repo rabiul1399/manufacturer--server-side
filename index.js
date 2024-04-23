@@ -53,6 +53,7 @@ async function run() {
 
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
+      console.log('useremail',email)
       const user = req.body;
       const filter = { email: email };
       const options = { upsert: true };
