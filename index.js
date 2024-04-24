@@ -6,12 +6,12 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIP_SECRET_KEY);
+const crypto = require('crypto');
 
-
+const secretKey = crypto.randomBytes(32).toString('hex');
 // middleware 
 app.use(cors());
 app.use(express.json());
-
 
 const uri = `mongodb+srv://${process.env.DB_SECRET_USER}:${process.env.DB_SECRET_PASS}@cluster0.lxf7z.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -52,20 +52,19 @@ async function run() {
     })
 
     app.put('/user/:email', async (req, res) => {
-      const email = req.params.email;
-      console.log('useremail',email)
-      const user = req.body;
-      const filter = { email: email };
-      const options = { upsert: true };
+      const userEmail = req.body.email;
+      // console.log('useremail',email)
+      // const user = req.body; 
+      // console.log('user',user)
+      const filter = { email: userEmail };
       const updateDoc = {
-        $set: user,
-      }
+        $set: { email: userEmail } // Assuming you're updating the email field
+      };
+      const options = { upsert: true };
       const result = await userCollection.updateOne(filter, updateDoc, options);
-
-      const token = jwt.sign({ email: email }, ddcaa26504cd70a6fef9801901c3981538563a1767c297cb8416e8a38c62fe00, { expiresIn: '1h' });
+      const token = jwt.sign({ email: userEmail }, secretKey, { expiresIn: '1h' });
+      console.log(token)
       res.send({ result, token });
-
-
     })
 
     app.put('/user/admin/:email', async (req, res) => {
