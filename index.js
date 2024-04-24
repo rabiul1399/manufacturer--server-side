@@ -79,7 +79,7 @@ async function run() {
     })
     app.delete('/user/:role', async (req, res) => {
       const role = req.params.role;
-      console.log(role)
+
       const query = { role: role };
 
       const result = await userCollection.deleteOne(query);
