@@ -19,7 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run() {
   try {
-    
+    await client.connect();
     const PartsCollection = client.db("parts_gear").collection("product");
     const OrderCollection = client.db("parts_gear").collection("Order");
     const userCollection = client.db("parts_gear").collection("users");
@@ -185,7 +185,7 @@ async function run() {
 
   }
   finally {
-
+console.log('finel eer')
   }
 }
 run().catch(console.dir);
